@@ -26,4 +26,3 @@ for idx in range(len(pdData)):
     itemIDX = context['id']
     savePath = '{}\\{}.docx'.format(CONST.OUTPUTSPATH, itemIDX)
     doc.save(savePath)
-
