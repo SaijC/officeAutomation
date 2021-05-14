@@ -3,7 +3,6 @@ from docxtpl import DocxTemplate
 from officeAutomation.autofillWordDoc.constants import constants as CONST
 
 
-doc = DocxTemplate('{}\\{}'.format(CONST.TEMPLATES, 'wordTest.docx'))
 data = pd.read_excel('{}\\{}'.format(CONST.INPUTSPATH, 'testData.xlsx'))
 pdData = pd.DataFrame(data)
 
@@ -12,18 +11,20 @@ def replaceSpace(inputStr):
         inputStr = inputStr.replace(' ', '_')
     return inputStr
 
-def toFile(filename=''):
-    print(CONST.TEMPLATES)
+def buildContext(idx):
+    context = dict()
+    for columName, row in pdData.iteritems():
+        if 'Unnamed' in columName:
+            continue
+        newColumName = replaceSpace(columName)
+        context.update({newColumName: row[idx]})
+    return context
 
-# for idx in range(len(pdData)):
-#     context = dict()
-#     for columName, row in pdData.iteritems():
-#         if 'Unnamed' in columName:
-#             continue
-#         newColumName = replaceSpace(columName)
-#         context.update({newColumName: row[idx]})
-#     print(context)
-#     renders = doc.render(context)
-#     # doc.save('output_wordTest.docx')
+for idx in range(len(pdData)):
+    doc = DocxTemplate('{}\\{}'.format(CONST.TEMPLATES, 'wordTest.docx'))
+    context = buildContext(idx)
+    renders = doc.render(context)
+    itemID = context['id']
+    savePath = '{}\\{}.docx'.format(CONST.OUTPUTSPATH, itemID)
+    doc.save(savePath)
 
-toFile()
