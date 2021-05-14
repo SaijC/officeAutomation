@@ -2,8 +2,7 @@ import pandas as pd
 from docxtpl import DocxTemplate
 from officeAutomation.autofillWordDoc.constants import constants as CONST
 
-
-data = pd.read_excel('{}\\{}'.format(CONST.INPUTSPATH, 'testData.xlsx'))
+data = pd.read_excel(CONST.INPUTDATAFILENAME)
 pdData = pd.DataFrame(data)
 
 def replaceSpace(inputStr):
@@ -21,10 +20,10 @@ def buildContext(idx):
     return context
 
 for idx in range(len(pdData)):
-    doc = DocxTemplate('{}\\{}'.format(CONST.TEMPLATES, 'wordTest.docx'))
+    doc = DocxTemplate(CONST.WORDTEMPLATEFILENAME)
     context = buildContext(idx)
     renders = doc.render(context)
-    itemID = context['id']
-    savePath = '{}\\{}.docx'.format(CONST.OUTPUTSPATH, itemID)
+    itemIDX = context['id']
+    savePath = '{}\\{}.docx'.format(CONST.OUTPUTSPATH, itemIDX)
     doc.save(savePath)
 
