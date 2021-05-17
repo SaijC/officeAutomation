@@ -1,4 +1,4 @@
-class stringUtils:
+class StringUtils:
     """
     class to handle string operations
     """

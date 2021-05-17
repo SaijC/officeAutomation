@@ -5,6 +5,7 @@ import logging
 import pandas as pd
 import PyQt5.QtWidgets as QtWidgets
 from officeAutomation.autofillWordDoc.constants import constants as CONST
+from officeAutomation.utils.utils import StringUtils as strUtils
 from officeAutomation.autofillWordDoc.core.autoFill import AutoFill
 
 logging.basicConfig(level=logging.DEBUG)
@@ -95,7 +96,6 @@ class MainDialog(QtWidgets.QDialog):
             for key, value in pdDataDict['id'].items():
                 self.listBox.addItem(value)
 
-
     def setExcelfilePath(self):
         """
         pyside2 connection instructions for setPath button
@@ -111,7 +111,6 @@ class MainDialog(QtWidgets.QDialog):
             self.loadExcelLineEdit.setText(file_path)
             self.addToListWidget()
 
-
     def setTempfilePath(self):
         """
         pyside2 connection instructions for setPath button
@@ -125,6 +124,32 @@ class MainDialog(QtWidgets.QDialog):
         if file_path:
             self.tempFilePath = file_path
             self.loadTempLineEdit.setText(file_path)
+
+    def createContextList(self, greenList):
+        excelFilePath = self.excelFilePath
+        data = pd.read_excel(excelFilePath)
+        pdData = pd.DataFrame(data)
+        pdDataList = pdData.values.tolist()
+
+        if greenList:
+            columnNames = list(pdData.columns.values)
+            greenListItems = list()
+
+            for i in pdDataList:
+                if i[0] in greenList:
+                    greenListItems.append(i)
+
+            contextList = list()
+            for itemList in greenListItems:
+                contextDict = dict()
+                keyValuePair = zip(columnNames, itemList)
+                for key, val in keyValuePair:
+                    if 'Unnamed' in key:
+                        continue
+                    newKeyName = strUtils().replaceSpace(inputStr=key)
+                    contextDict.update({newKeyName: val})
+                contextList.append(contextDict)
+            return contextList
 
     def doIt(self):
         # af = AutoFill(inputExcelFile=self.excelFilePath,
