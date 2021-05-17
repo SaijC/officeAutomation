@@ -2,6 +2,7 @@
 
 import sys
 import logging
+import pandas as pd
 import PyQt5.QtWidgets as QtWidgets
 from officeAutomation.autofillWordDoc.constants import constants as CONST
 from officeAutomation.autofillWordDoc.core.autoFill import AutoFill
@@ -32,12 +33,13 @@ class MainDialog(QtWidgets.QDialog):
         self.loadTempPathBtn = QtWidgets.QPushButton('select')
 
         self.mappingQComboBox = QtWidgets.QComboBox()
+        self.listBox = QtWidgets.QListWidget()
+        self.listBox.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
         self.okBtn = QtWidgets.QPushButton('OK')
         self.cancelBtn = QtWidgets.QPushButton('Cancel')
 
     def createLayouts(self):
-
         # Create Layouts
         self.layoutTop = QtWidgets.QHBoxLayout()
         self.layoutTopLeft = QtWidgets.QVBoxLayout()
@@ -66,7 +68,7 @@ class MainDialog(QtWidgets.QDialog):
         self.layoutTop.addLayout(self.layoutTopRight)
 
         # MIDDLE layout
-        self.layoutMid.addWidget(self.mappingQComboBox)
+        self.layoutMid.addWidget(self.listBox)
 
         # BOTTOM layout
         self.layoutBot.addWidget(self.okBtn)
@@ -84,6 +86,16 @@ class MainDialog(QtWidgets.QDialog):
         self.okBtn.clicked.connect(self.doIt)
         self.cancelBtn.clicked.connect(self.close)
 
+    def addToListWidget(self):
+        if self.excelFilePath:
+            data = pd.read_excel(self.excelFilePath)
+            pdData = pd.DataFrame(data)
+            pdDataDict = pdData.to_dict()
+
+            for key, value in pdDataDict['id'].items():
+                self.listBox.addItem(value)
+
+
     def setExcelfilePath(self):
         """
         pyside2 connection instructions for setPath button
@@ -91,12 +103,14 @@ class MainDialog(QtWidgets.QDialog):
         """
 
         file_path, selected_filter = QtWidgets.QFileDialog.getOpenFileName(self,
-                                                                           "Select File",
-                                                                           CONST.INPUTSPATH,
-                                                                           CONST.EXCELDOC)
+                                                                           caption="Select File",
+                                                                           directory=CONST.INPUTSPATH,
+                                                                           filter=CONST.EXCELDOC)
         if file_path:
             self.excelFilePath = file_path
             self.loadExcelLineEdit.setText(file_path)
+            self.addToListWidget()
+
 
     def setTempfilePath(self):
         """
@@ -104,20 +118,23 @@ class MainDialog(QtWidgets.QDialog):
         :return: None
         """
         file_path, selected_filter = QtWidgets.QFileDialog.getOpenFileName(self,
-                                                                           "Select File",
-                                                                           CONST.TEMPLATES,
-                                                                           CONST.WORDDOC
+                                                                           caption="Select File",
+                                                                           directory=CONST.TEMPLATES,
+                                                                           filter=CONST.WORDDOC
                                                                            )
         if file_path:
             self.tempFilePath = file_path
             self.loadTempLineEdit.setText(file_path)
 
     def doIt(self):
-        af = AutoFill(inputExcelFile=self.excelFilePath,
-                      templateWordFile=self.tempFilePath,
-                      outputPath=CONST.OUTPUTSPATH)
-
-        af.autoFill()
+        # af = AutoFill(inputExcelFile=self.excelFilePath,
+        #               templateWordFile=self.tempFilePath,
+        #               outputPath=CONST.OUTPUTSPATH)
+        #
+        # af.autoFill()
+        selItems = self.listBox.selectedItems()
+        listItems = [selItems[idx].text() for idx in range(len(selItems))]
+        print(listItems)
 
 
 if __name__ == '__main__':

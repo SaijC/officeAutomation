@@ -3,7 +3,7 @@ class stringUtils:
     class to handle string operations
     """
 
-    def replaceSpace(inputStr):
+    def replaceSpace(self, inputStr):
         """
         Replace any space character with '_'
         :param inputStr: string
