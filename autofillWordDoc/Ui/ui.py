@@ -1,14 +1,11 @@
 """Horizontal layout example."""
 
 import sys
-import logging
 import pandas as pd
 import PyQt5.QtWidgets as QtWidgets
 from officeAutomation.autofillWordDoc.constants import constants as CONST
 from officeAutomation.utils.utils import StringUtils as strUtils
 from officeAutomation.autofillWordDoc.core.autoFill import AutoFill
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 class MainDialog(QtWidgets.QDialog):
@@ -23,6 +20,10 @@ class MainDialog(QtWidgets.QDialog):
         self.createConnections()
 
     def createWidgets(self):
+        """
+        Create Widgets
+        :return:
+        """
         self.loadExcelLable = QtWidgets.QLabel('Excel Doc')
         self.loadExcelLineEdit = QtWidgets.QLineEdit(CONST.INPUTSPATH)
         self.loadExcelPathBtn = QtWidgets.QPushButton('select')
@@ -41,7 +42,10 @@ class MainDialog(QtWidgets.QDialog):
         self.cancelBtn = QtWidgets.QPushButton('Cancel')
 
     def createLayouts(self):
-        # Create Layouts
+        """
+        Create Layouts
+        :return:
+        """
         self.layoutTop = QtWidgets.QHBoxLayout()
         self.layoutTopLeft = QtWidgets.QVBoxLayout()
         self.layoutTopRight = QtWidgets.QVBoxLayout()
@@ -82,12 +86,20 @@ class MainDialog(QtWidgets.QDialog):
         self.setLayout(self.layoutMain)
 
     def createConnections(self):
+        """
+        Create connection between widget and functions
+        :return:
+        """
         self.loadTempPathBtn.clicked.connect(self.setTempfilePath)
         self.loadExcelPathBtn.clicked.connect(self.setExcelfilePath)
         self.okBtn.clicked.connect(self.doIt)
         self.cancelBtn.clicked.connect(self.close)
 
     def addToListWidget(self):
+        """
+        Read the input data and populate the listWidget
+        :return: None
+        """
         if self.excelFilePath:
             data = pd.read_excel(self.excelFilePath)
             pdData = pd.DataFrame(data)
@@ -126,44 +138,89 @@ class MainDialog(QtWidgets.QDialog):
             self.loadTempLineEdit.setText(file_path)
 
     def createContextList(self, greenList):
+        """
+        Process pandas dataframe data to create a list of dictionaries for context
+        :param greenList: list
+        :return: list of dictionaries [{}, {}, {}]
+        """
         excelFilePath = self.excelFilePath
         data = pd.read_excel(excelFilePath)
         pdData = pd.DataFrame(data)
-        pdDataList = pdData.values.tolist()
+        pdDataList = list(pdData.values.tolist())
+
+        blacklist = ('Unnamed')
 
         if greenList:
+            # if there are selected items in listWidget, create context of selected ids
             columnNames = list(pdData.columns.values)
             greenListItems = list()
+            contextList = list()
 
             for i in pdDataList:
                 if i[0] in greenList:
                     greenListItems.append(i)
 
-            contextList = list()
             for itemList in greenListItems:
                 contextDict = dict()
                 keyValuePair = zip(columnNames, itemList)
                 for key, val in keyValuePair:
-                    if 'Unnamed' in key:
+                    if key in blacklist:
                         continue
                     newKeyName = strUtils().replaceSpace(inputStr=key)
                     contextDict.update({newKeyName: val})
                 contextList.append(contextDict)
             return contextList
+        else:
+            # Create a context for all entries in input data
+            numIDX = len(pdData.index)
+            contextList = list()
+
+            for idx in range(numIDX):
+                contextDict = dict()
+                for columName, row in pdData.iteritems():
+                    if columName in blacklist:
+                        continue
+                    newColumName = strUtils().replaceSpace(inputStr=columName)
+                    contextDict.update({newColumName: row[idx]})
+                contextList.append(contextDict)
+            return contextList
+
+    def popup(self):
+        """
+        Create popup
+        :return:
+        """
+        msg = QtWidgets.QMessageBox()
+        msg.setWindowTitle("Done!")
+        msg.setText("Task Finished!")
+        msg.exec_()
+
+    def resolve(self):
+        """
+        ensure that the necessary paths are available
+        :return:
+        """
+        if not self.excelFilePath:
+            print('Please set Excel file path!')
+            self.setExcelfilePath()
+
+        if not self.tempFilePath:
+            print('Please set Word file path!')
+            self.setTempfilePath()
 
     def doIt(self):
+        """
+        Run program
+        :return: None
+        """
+        self.resolve()
+
         selItems = self.listBox.selectedItems()
         greenListItems = [selItems[idx].text() for idx in range(len(selItems))]
         contextList = self.createContextList(greenList=greenListItems)
 
-        print(contextList)
-        af = AutoFill(templateWordFile=self.tempFilePath, outputPath=CONST.OUTPUTSPATH, contextList=contextList)
-
+        af = AutoFill(templateWordFile=self.tempFilePath,
+                      outputPath=CONST.OUTPUTSPATH,
+                      contextList=contextList)
         af.autoFill()
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    dlg = MainDialog()
-    dlg.show()
-    sys.exit(app.exec_())
+        self.popup()
