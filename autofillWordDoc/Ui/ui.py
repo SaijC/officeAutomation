@@ -152,14 +152,14 @@ class MainDialog(QtWidgets.QDialog):
             return contextList
 
     def doIt(self):
-        # af = AutoFill(inputExcelFile=self.excelFilePath,
-        #               templateWordFile=self.tempFilePath,
-        #               outputPath=CONST.OUTPUTSPATH)
-        #
-        # af.autoFill()
         selItems = self.listBox.selectedItems()
-        listItems = [selItems[idx].text() for idx in range(len(selItems))]
-        print(listItems)
+        greenListItems = [selItems[idx].text() for idx in range(len(selItems))]
+        contextList = self.createContextList(greenList=greenListItems)
+
+        print(contextList)
+        af = AutoFill(templateWordFile=self.tempFilePath, outputPath=CONST.OUTPUTSPATH, contextList=contextList)
+
+        af.autoFill()
 
 
 if __name__ == '__main__':

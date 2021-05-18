@@ -1,15 +1,13 @@
 """
 Automating excel to word
 """
-import pandas as pd
 from docxtpl import DocxTemplate
-from officeAutomation.utils.utils import stringUtils as strUtils
 
 
 class AutoFill:
-    def __init__(self, inputExcelFile, templateWordFile, outputPath):
-        self.inputExcelFile = inputExcelFile
+    def __init__(self, templateWordFile, outputPath, contextList):
         self.templateWordFile = templateWordFile
+        self.contextList = contextList
         self.outputPath = outputPath
 
     def autoFill(self):
@@ -19,21 +17,10 @@ class AutoFill:
         :param templateWordFile: docx file
         :return: None
         """
-        data = pd.read_excel(self.inputExcelFile)
-        pdData = pd.DataFrame(data)
-        numIDX = len(pdData.index)
 
-        for idx in range(numIDX):
+        for context in self.contextList:
             doc = DocxTemplate(self.templateWordFile)
-
-            context = dict()
-            for columName, row in pdData.iteritems():
-                if 'Unnamed' in columName:
-                    continue
-                newColumName = strUtils.replaceSpace(inputStr=columName)
-                context.update({newColumName: row[idx]})
             doc.render(context)
-
             itemIDX = context['id']
             savePath = '{}\\{}.docx'.format(self.outputPath, itemIDX)
             doc.save(savePath)
