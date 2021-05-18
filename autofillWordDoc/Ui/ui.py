@@ -2,6 +2,7 @@
 
 import sys
 import pandas as pd
+from PyQt5.QtCore import Qt
 import PyQt5.QtWidgets as QtWidgets
 from officeAutomation.autofillWordDoc.constants import constants as CONST
 from officeAutomation.utils.utils import StringUtils as strUtils
@@ -15,6 +16,7 @@ class MainDialog(QtWidgets.QDialog):
         self.setMinimumSize(600, 115)
         self.tempFilePath = ''
         self.excelFilePath = ''
+        self.outputPath = CONST.OUTPUTSPATH
         self.createWidgets()
         self.createLayouts()
         self.createConnections()
@@ -24,15 +26,23 @@ class MainDialog(QtWidgets.QDialog):
         Create Widgets
         :return:
         """
-        self.loadExcelLable = QtWidgets.QLabel('Excel Doc')
+        self.loadExcelLable = QtWidgets.QLabel('Excel Doc:')
         self.loadExcelLineEdit = QtWidgets.QLineEdit(CONST.INPUTSPATH)
         self.loadExcelPathBtn = QtWidgets.QPushButton('select')
 
-        self.dividerLable1 = QtWidgets.QLabel('|')
+        self.dividerLable1 = QtWidgets.QLabel('-' * 150)
+        self.dividerLable1.setAlignment(Qt.AlignCenter)
 
-        self.loadTempLable = QtWidgets.QLabel('Template Doc')
+        self.loadTempLable = QtWidgets.QLabel('Template Doc:')
         self.loadTempLineEdit = QtWidgets.QLineEdit(CONST.TEMPLATES)
         self.loadTempPathBtn = QtWidgets.QPushButton('select')
+
+        self.dividerLable2 = QtWidgets.QLabel('-' * 150)
+        self.dividerLable2.setAlignment(Qt.AlignCenter)
+
+        self.loadOutputLable = QtWidgets.QLabel('Output Directory:')
+        self.loadOutputLineEdit = QtWidgets.QLineEdit(CONST.OUTPUTSPATH)
+        self.loadOutputPathBtn = QtWidgets.QPushButton('select')
 
         self.mappingQComboBox = QtWidgets.QComboBox()
         self.listBox = QtWidgets.QListWidget()
@@ -46,31 +56,39 @@ class MainDialog(QtWidgets.QDialog):
         Create Layouts
         :return:
         """
-        self.layoutTop = QtWidgets.QHBoxLayout()
-        self.layoutTopLeft = QtWidgets.QVBoxLayout()
-        self.layoutTopRight = QtWidgets.QVBoxLayout()
-        self.layoutTopRightHBox = QtWidgets.QHBoxLayout()
+        self.layoutTop = QtWidgets.QVBoxLayout()
+        self.layoutTopHBox1 = QtWidgets.QHBoxLayout()
+        self.layoutTopHBox2 = QtWidgets.QHBoxLayout()
+        self.layoutTopHBox3 = QtWidgets.QHBoxLayout()
+
         self.layoutMid = QtWidgets.QVBoxLayout()
         self.layoutBot = QtWidgets.QHBoxLayout()
         self.layoutMain = QtWidgets.QVBoxLayout()
 
-        # TOP left layout
-        self.layoutTopLeft.addWidget(self.loadExcelLable)
-        self.layoutTopLeftHBox = QtWidgets.QHBoxLayout()
-        self.layoutTopLeftHBox.addWidget(self.loadExcelLineEdit)
-        self.layoutTopLeftHBox.addWidget(self.loadExcelPathBtn)
+        # TOP Layout
+        self.layoutTop.addWidget(self.loadExcelLable)
+        self.layoutTopHBox1.addWidget(self.loadExcelLineEdit)
+        self.layoutTopHBox1.addWidget(self.loadExcelPathBtn)
+        self.layoutTop.addLayout(self.layoutTopHBox1)
 
-        self.layoutTopLeft.addLayout(self.layoutTopLeftHBox)  # add to top left layout
+        self.layoutTop.addWidget(self.dividerLable1)
 
-        # TOP right layout
-        self.layoutTopRight.addWidget(self.loadTempLable)
-        self.layoutTopRightHBox.addWidget(self.loadTempLineEdit)
-        self.layoutTopRightHBox.addWidget(self.loadTempPathBtn)
-        self.layoutTopRight.addLayout(self.layoutTopRightHBox)  # add to top right layout
+        self.layoutTop.addWidget(self.loadTempLable)
+        self.layoutTopHBox2.addWidget(self.loadTempLineEdit)
+        self.layoutTopHBox2.addWidget(self.loadTempPathBtn)
+        self.layoutTop.addLayout(self.layoutTopHBox2)
+
+        self.layoutTop.addWidget(self.dividerLable2)
+
+        self.layoutTop.addWidget(self.loadOutputLable)
+        self.layoutTopHBox3.addWidget(self.loadOutputLineEdit)
+        self.layoutTopHBox3.addWidget(self.loadOutputPathBtn)
+        self.layoutTop.addLayout(self.layoutTopHBox3)
 
         # add layout to main TOP layout
-        self.layoutTop.addLayout(self.layoutTopLeft)
-        self.layoutTop.addLayout(self.layoutTopRight)
+        self.layoutTop.addLayout(self.layoutTopHBox1)
+        self.layoutTop.addLayout(self.layoutTopHBox2)
+        self.layoutTop.addLayout(self.layoutTopHBox3)
 
         # MIDDLE layout
         self.layoutMid.addWidget(self.listBox)
@@ -92,6 +110,7 @@ class MainDialog(QtWidgets.QDialog):
         """
         self.loadTempPathBtn.clicked.connect(self.setTempfilePath)
         self.loadExcelPathBtn.clicked.connect(self.setExcelfilePath)
+        self.loadOutputPathBtn.clicked.connect(self.setOutputPath)
         self.okBtn.clicked.connect(self.doIt)
         self.cancelBtn.clicked.connect(self.close)
 
@@ -136,6 +155,19 @@ class MainDialog(QtWidgets.QDialog):
         if file_path:
             self.tempFilePath = file_path
             self.loadTempLineEdit.setText(file_path)
+
+    def setOutputPath(self):
+        """
+        pyside2 connection instructions for set output path button
+        :return: None
+        """
+        file_path = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                               caption="Select File",
+                                                               directory=CONST.OUTPUTSPATH,
+                                                               )
+        if file_path:
+            self.outputPath = file_path
+            self.loadOutputLineEdit.setText(file_path)
 
     def createContextList(self, greenList):
         """
@@ -220,7 +252,7 @@ class MainDialog(QtWidgets.QDialog):
         contextList = self.createContextList(greenList=greenListItems)
 
         af = AutoFill(templateWordFile=self.tempFilePath,
-                      outputPath=CONST.OUTPUTSPATH,
+                      outputPath=self.outputPath,
                       contextList=contextList)
         af.autoFill()
         self.popup()
